@@ -2,6 +2,10 @@ import math
 import cv2 as cv
 import numpy as np
 import MySQLdb as mysql
+import os
+from twilio.rest import Client
+from os.path import exists
+import time
 
 thresh = 0
 view = [(0,0), (0,0)]
@@ -96,6 +100,45 @@ def GetCoffeeLevel():
     #    print(estimate)
     print(estimate)
     if estimate != -1:
-        cursor.execute("INSERT INTO {} (potLevel) VALUES ({});".format(table_name, estimate))    
+        print("INSERT INTO {} (time, potLevel) VALUES (\'{}\', {});".format(table_name, time.strftime('%Y-%m-%d %H:%M:%S'), estimate))
+        cursor.execute("INSERT INTO {} (time, potLevel) VALUES (\'{}\', {});".format(table_name, time.strftime('%Y-%m-%d %H:%M:%S'), estimate))    
         db.commit()
+    
+    cups = round(estimate * 5)
+    if cups >= 0:
+        if exists('system_vars.txt'):
+            f = open('system_vars.txt', 'r')
+            hasSent = int(f.read()) > 0
+            f.close()
+        else:
+            hasSent = False
+        
+        if cups == 0:
+            result = 'Needs refill'
+            if not hasSent:
+                account_sid = os.environ['TWILIO_ACCOUNT_SID']
+                auth_token = os.environ['TWILIO_AUTH_TOKEN']
+                client = Client(account_sid, auth_token)
 
+                message = client.messages \
+                .create(
+                     body="Coffee pot needs to be refilled!",
+                     from_='+19127859923',
+                     to='+17135042933'
+                )
+                print(message.sid)
+                hasSent = True
+        elif cups == 1:
+            result = 'About 1 cup left'
+            hasSent = False
+        else:
+            result = 'About {} cups left'.format(cups)
+            hasSent = False
+        
+        img = np.zeros((35,300,4), dtype=np.uint8)
+        cv.putText(img, result, (4, 26), cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255, 255), 2, cv.LINE_4)
+        cv.imwrite('/var/www/html/cups.png',img)
+        
+        f = open('system_vars.txt', 'w')
+        f.write('{}'.format(1 if hasSent else 0))
+        f.close()

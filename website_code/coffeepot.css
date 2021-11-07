@@ -1,0 +1,33 @@
+html {
+  width: 100%;
+}
+body {
+  background-color: indigo;
+  width: 80%;
+  border-style: solid;
+  border-color: white;
+  margin-left: auto;
+  margin-right: auto;
+}
+h1 {
+  text-align: center;
+  font-size: 40px;
+  font-weight: bold;
+  color: white;
+  border-style: solid;
+}
+h2 {
+  text-align: center;
+  font-size: 30px;
+  color: white;
+}
+.container {
+  width: 80%;
+  margin: auto;
+}
+.left {
+  float: left;
+}
+.right {
+  float: right;
+}
